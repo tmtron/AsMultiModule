@@ -7,7 +7,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-alpha2'
+        classpath 'com.android.tools.build:gradle:3.0.0-alpha5'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -23,4 +23,44 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+subprojects {
+    tasks.withType(JavaCompile) {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+        // see: https://blog.gradle.org/incremental-compiler-avoidance
+        // see: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.compile.JavaCompile.html
+        options.incremental = true
+        /* you can pass the javac_Xlint option via a command line parameter to gradle
+         * and we will pass it to the java-compiler
+         * e.g. gradlew.bat -Pjavac_Xlint=unchecked clean build
+         */
+        if (rootProject.hasProperty('javac_Xlint')) {
+            // System.err.println("javac_Xlint = $rootProject.javac_Xlint")
+            options.compilerArgs << "-Xlint:$rootProject.javac_Xlint"
+        }
+    }
+
+    afterEvaluate {
+        if (it.hasProperty('android')) {
+            android {
+                compileSdkVersion 26
+                buildToolsVersion "26.0.0"
+
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_1_8
+                    targetCompatibility = JavaVersion.VERSION_1_8
+                }
+
+                defaultConfig {
+                    minSdkVersion 21
+                    targetSdkVersion 26
+                    versionCode 1
+                    versionName "1.0"
+                    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+                }
+            }
+        }
+    }
 }
